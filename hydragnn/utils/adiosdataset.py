@@ -141,7 +141,8 @@ class AdiosWriter:
         """
         t0 = time.time()
         log0("Adios saving:", self.filename)
-        self.writer = self.io.Open(self.filename, ad2.Mode.Write, self.comm)
+        #self.writer = self.io.Open(self.filename, ad2.Mode.Write, self.comm)
+        self.writer = self.io.Open(self.filename, ad2.Mode.Write)
         total_ns = 0
         for label in self.dataset:
             if len(self.dataset[label]) == 0:
@@ -380,7 +381,8 @@ class AdiosDataset(AbstractBaseDataset):
         adios_read_time = 0.0
         ddstore_time = 0.0
         t0 = time.time()
-        with ad2.open(self.filename, "r", self.comm) as f:
+        # with ad2.open(self.filename, "r", self.comm) as f:
+        with ad2.open(self.filename, "r") as f:
             f.__next__()
             t1 = time.time()
             self.vars = f.available_variables()
@@ -553,7 +555,8 @@ class AdiosDataset(AbstractBaseDataset):
         log0("Data loading time (sec): ", (t7 - t0))
 
         if not self.preload and not self.shmem:
-            self.f = ad2.open(self.filename, "r", self.comm)
+            # self.f = ad2.open(self.filename, "r", self.comm)
+            self.f = ad2.open(self.filename, "r")
             self.f.__next__()
 
         ## FIXME: Using the same routine in SimplePickleDataset. We need to make as a common function
@@ -755,7 +758,8 @@ class AdiosDataset(AbstractBaseDataset):
                 start[vdim] = self.variable_offset[k][i]
                 count[vdim] = self.variable_count[k][i : i + dn].sum()
 
-                with ad2.open(self.filename, "r", self.comm) as f:
+                # with ad2.open(self.filename, "r", self.comm) as f:
+                with ad2.open(self.filename, "r") as f:
                     f.__next__()
                     self._data[k] = f.read("%s/%s" % (self.label, k), start, count)
 
