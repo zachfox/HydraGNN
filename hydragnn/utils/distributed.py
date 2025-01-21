@@ -283,8 +283,11 @@ def get_distributed_model(model, verbosity=0, sync_batch_norm=False):
             if sync_batch_norm:
                 model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
             device = get_device_from_name(device_name)
+            # model = torch.nn.parallel.DistributedDataParallel(
+            #     model, device_ids=[device]
+            # )
             model = torch.nn.parallel.DistributedDataParallel(
-                model, device_ids=[device]
+                model, device_ids=[device], find_unused_parameters=True
             )
     return model
 
