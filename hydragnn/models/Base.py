@@ -563,6 +563,8 @@ class Base(Module):
             pred_shape = head_pre.shape
             head_val = value[head_index[ihead]]
             value_shape = head_val.shape
+            print(head_pre.shape)
+            print(value.shape)
             if pred_shape != value_shape:
                 head_val = torch.reshape(head_val, pred_shape)
             if var is None:
