@@ -3,8 +3,6 @@ import numpy as np
 import random
 
 import torch
-from torch import tensor
-from torch_geometric.data import Data
 from torch_geometric.transforms import (
     Distance,
     NormalizeRotation,
@@ -12,38 +10,29 @@ from torch_geometric.transforms import (
     PointPairFeatures,
 )
 
-from hydragnn.utils import nsplit, tensor_divide, comm_reduce
-from hydragnn.utils.print_utils import print_distributed, iterate_tqdm, log
+from hydragnn.utils.distributed import nsplit, comm_reduce
+from hydragnn.utils.model import tensor_divide
+from hydragnn.utils.print_utils import iterate_tqdm, log
 from hydragnn.utils.distributed import get_device
 from hydragnn.utils.abstractbasedataset import AbstractBaseDataset
-from hydragnn.preprocess.utils import (
+from hydragnn.preprocess import (
     get_radius_graph,
     get_radius_graph_pbc,
-    get_radius_graph_config,
-    get_radius_graph_pbc_config,
+    stratified_sampling
 )
-from hydragnn.preprocess import (
-    update_predicted_values,
-    update_atom_features,
-    stratified_sampling,
-)
-
-from sklearn.model_selection import StratifiedShuffleSplit
-
-from hydragnn.preprocess.dataset_descriptors import AtomFeatures
 
 from abc import ABC, abstractmethod
 
 
 class AbstractRawDataset(AbstractBaseDataset, ABC):
-    """Raw dataset class"""
+    """Raw datasets class"""
 
     def __init__(self, config, dist=False, sampling=None):
         super().__init__()
 
         """
         config:
-          shows the dataset path the target variables information, e.g, location and dimension, in data file
+          shows the datasets path the target variables information, e.g, location and dimension, in data file
         ###########
         dataset_list:
           list of datasets read from self.path_dictionary
@@ -64,12 +53,12 @@ class AbstractRawDataset(AbstractBaseDataset, ABC):
         # self.serial_data_name_list = []
         self.normalize_features = (
             config["Dataset"]["normalize_features"]
-            if config["Dataset"]["normalize_features"] is not None
+            if "normalize_features" in config["Dataset"]
             else False
         )
         self.node_feature_name = (
             config["Dataset"]["node_features"]["name"]
-            if config["Dataset"]["node_features"]["name"] is not None
+            if "name" in config["Dataset"]["node_features"]
             else None
         )
         self.node_feature_dim = config["Dataset"]["node_features"]["dim"]
@@ -214,8 +203,7 @@ class AbstractRawDataset(AbstractBaseDataset, ABC):
             self.__normalize_dataset()
 
     def __normalize_dataset(self):
-
-        """Performs the normalization on Data objects and returns the normalized dataset."""
+        """Performs the normalization on Data objects and returns the normalized datasets."""
         num_node_features = len(self.node_feature_dim)
         num_graph_features = len(self.graph_feature_dim)
 
@@ -348,6 +336,8 @@ class AbstractRawDataset(AbstractBaseDataset, ABC):
             self.dataset[:] = [rotational_invariance(data) for data in self.dataset]
 
         if self.periodic_boundary_conditions:
+            for data in dataset:
+                data.pbc = [True, True, True]
             # edge lengths already added manually if using PBC, so no need to call Distance.
             compute_edges = get_radius_graph_pbc(
                 radius=self.radius,
