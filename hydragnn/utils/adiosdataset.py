@@ -3,7 +3,7 @@ import pickle
 import time
 import os
 
-from hydragnn.utils.print.print_utils import log, log0, iterate_tqdm
+from hydragnn.utils.print_utils import log, log0, iterate_tqdm
 
 import numpy as np
 
@@ -24,7 +24,7 @@ except ImportError:
 
 import hydragnn.utils.profiling_and_tracing.tracer as tr
 
-from hydragnn.utils.datasets.abstractbasedataset import AbstractBaseDataset
+from hydragnn.utils.abstractbasedataset import AbstractBaseDataset
 from hydragnn.utils.distributed import nsplit
 from hydragnn.preprocess import update_predicted_values, update_atom_features
 
