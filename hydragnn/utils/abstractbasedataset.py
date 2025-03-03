@@ -5,24 +5,25 @@ import torch
 
 class AbstractBaseDataset(torch.utils.data.Dataset, ABC):
     """
-    HydraGNN's base dataset. This is abstract class.
+    HydraGNN's base datasets. This is abstract class.
     """
 
     def __init__(self):
         super().__init__()
         self.dataset = list()
+        self.dataset_name = None
 
     @abstractmethod
     def get(self, idx):
         """
-        Return a dataset at idx
+        Return a datasets at idx
         """
         pass
 
     @abstractmethod
     def len(self):
         """
-        Total number of dataset.
+        Total number of datasets.
         If data is distributed, it should be the global total size.
         """
         pass
@@ -39,7 +40,14 @@ class AbstractBaseDataset(torch.utils.data.Dataset, ABC):
         return self.len()
 
     def __getitem__(self, idx):
-        return self.get(idx)
+        obj = self.get(idx)
+
+        # Get the dataset name if it exists
+        if hasattr(self, "dataset_name"):
+            if self.dataset_name is not None:
+                obj.dataset_name = self.dataset_name
+
+        return obj
 
     def __iter__(self):
         for idx in range(self.len()):
