@@ -181,6 +181,7 @@ def setup_ddp(use_deepspeed=False):
                     timeout=timedelta(seconds=1800),
                 )
             else:
+                os.environ["MASTER_PORT"] = "29501" 
                 dist.init_process_group(
                     backend=backend,
                     init_method="env://",
