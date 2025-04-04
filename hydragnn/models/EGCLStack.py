@@ -276,7 +276,7 @@ class E_GCL(nn.Module):
             (edge_index.size(1), 3), device=edge_index.device
         )  # pbc edge shifts are currently not supported in positional update models
         coord_diff, radial = get_edge_vectors_and_lengths(
-            coord, edge_index, edge_shifts, normalize=self.norm_diff, eps=1.0
+            coord, edge_index, edge_shifts, normalize=self.norm_diff, eps=1e-4
         )
         # Message Passing
         edge_feat = self.edge_model(x[row], x[col], radial, edge_attr)

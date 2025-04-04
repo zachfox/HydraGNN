@@ -380,6 +380,8 @@ class Base(Module):
                         self.config_heads["node"]["type"],
                         self.activation_function,
                     )
+                elif self.node_NN_type == "Identity":
+                    head_NN.append(torch.nn.Identity())
                 elif self.node_NN_type == "conv":
                     for conv, batch_norm in zip(
                         self.convs_node_hidden, self.batch_norms_node_hidden
@@ -459,6 +461,24 @@ class Base(Module):
                         inv_node_feat = self.activation_function(inv_node_feat)
                     x_node = inv_node_feat
                     x = inv_node_feat
+                elif True: # for testing
+                    if self.equivariance:
+                        x_node = equiv_node_feat - data.pos # following 3.2 The Dynamics in "Equivariant Diffusion for Molecule Generation in 3D" (Hoogeboom et al 2022)
+                        # calculate the center of gravity for each subgraph
+                        sg_num_nodes = [d.num_nodes for d in data.to_data_list()] # TODO - inefficient
+                        com_ten = []
+                        # std_ten = []
+                        place = 0
+                        for sgnn in sg_num_nodes:
+                            sg_x_node = x_node[place:place+sgnn]
+                            com_ten.append(sg_x_node.mean(dim=0, keepdim=True).tile(sgnn, 1))
+                            # std_ten.append(sg_x_node.std() * torch.ones_like(sg_x_node))
+                            place += sgnn
+                        com_ten = torch.cat(com_ten, dim=0)
+                        # std_ten = torch.cat(std_ten, dim=0)
+                        x_node = x_node - com_ten # subtract centers of mass
+                        # x_node = x_node / std_ten # normalize output like GroupNorm
+
                 else:
                     x_node = headloc(x=x, batch=data.batch)
                 outputs.append(x_node[:, :head_dim])
