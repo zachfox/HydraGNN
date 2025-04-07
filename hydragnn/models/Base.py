@@ -395,6 +395,9 @@ class Base(Module):
                         + self.node_NN_type
                         + "; currently only support 'mlp', 'mlp_per_node' or 'conv' (can be set with config['NeuralNetwork']['Architecture']['output_heads']['node']['type'], e.g., ./examples/ci_multihead.json)"
                     )
+            elif self.head_type[ihead] == "pos":
+                head_NN = ModuleList()
+                head_NN.append(torch.nn.Identity())
             else:
                 raise ValueError(
                     "Unknown head type"
@@ -446,6 +449,25 @@ class Base(Module):
                 output_head = headloc(x_graph_head)
                 outputs.append(output_head[:, :head_dim])
                 outputs_var.append(output_head[:, head_dim:] ** 2)
+            elif type_head == "pos": 
+                if self.equivariance:
+                    x_node = equiv_node_feat - data.pos # following 3.2 The Dynamics in "Equivariant Diffusion for Molecule Generation in 3D" (Hoogeboom et al 2022)
+                    # calculate the center of gravity for each subgraph
+                    sg_num_nodes = [d.num_nodes for d in data.to_data_list()] # TODO - inefficient
+                    com_ten = []
+                    # std_ten = []
+                    place = 0
+                    for sgnn in sg_num_nodes:
+                        sg_x_node = x_node[place:place+sgnn]
+                        com_ten.append(sg_x_node.mean(dim=0, keepdim=True).tile(sgnn, 1))
+                        # std_ten.append(sg_x_node.std() * torch.ones_like(sg_x_node))
+                        place += sgnn
+                    com_ten = torch.cat(com_ten, dim=0)
+                    # std_ten = torch.cat(std_ten, dim=0)
+                    x_node = x_node - com_ten # subtract centers of mass
+                    # x_node = x_node / std_ten # normalize output like GroupNorm
+                outputs.append(x_node[:, :head_dim])
+                outputs_var.append(x_node[:, head_dim:] ** 2)
             else:
                 if self.node_NN_type == "conv":
                     inv_node_feat = x
@@ -459,7 +481,7 @@ class Base(Module):
                         inv_node_feat = self.activation_function(inv_node_feat)
                     x_node = inv_node_feat
                     x = inv_node_feat
-                else:
+                elif self.node_NN_type == "mlp":
                     x_node = headloc(x=x, batch=data.batch)
                 outputs.append(x_node[:, :head_dim])
                 outputs_var.append(x_node[:, head_dim:] ** 2)

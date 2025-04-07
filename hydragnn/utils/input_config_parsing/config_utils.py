@@ -207,7 +207,7 @@ def update_config_NN_outputs(config, data, graph_size_variable):
         for ihead in range(len(output_type)):
             if output_type[ihead] == "graph":
                 dim_item = data.y_loc[0, ihead + 1].item() - data.y_loc[0, ihead].item()
-            elif output_type[ihead] == "node":
+            elif (output_type[ihead] == "node") or (output_type[ihead] == "pos"):
                 if (
                     graph_size_variable
                     and config["Architecture"]["output_heads"]["node"]["type"]
