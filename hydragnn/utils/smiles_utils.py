@@ -243,8 +243,7 @@ def generate_graphdata_from_rdkit_molecule_pt(
         x = torch.cat([x, atomicdescriptors_torch_tensor], dim=-1).to(torch.float)
 
     y = ytarget  # .squeeze()
-    print('***')
-    print(x.shape) 
+    
     if get_positions:
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y, pos=torch.tensor(coordinates, dtype=torch.float))
     else:

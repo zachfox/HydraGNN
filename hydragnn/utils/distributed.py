@@ -278,7 +278,7 @@ def get_distributed_model(model, verbosity=0, sync_batch_norm=False):
 
     if dist.is_initialized():
         if device_name == "cpu":
-            model = torch.nn.parallel.DistributedDataParallel(model)
+            model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
         else:
             if sync_batch_norm:
                 model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
